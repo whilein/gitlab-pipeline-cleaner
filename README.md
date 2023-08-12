@@ -33,6 +33,9 @@
       - `exclude` - Exclude specified projects from searching (full path, i.e. `mygroup/myprojecttoexclude`)
     - `options` - Optional overrides of global options
 
+## Environment
+- `CONFIG_PATH` - Path to config file, by default `config.yml`.
+
 ## Deploy
 
 ### Docker
