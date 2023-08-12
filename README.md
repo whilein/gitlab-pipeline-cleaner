@@ -17,6 +17,32 @@
   </a>
 </div>
 
+## Configuration
+- `url` - GitLab instance URL, i.e. `https://gitlab.com` or `http://localhost`
+- `token` - Private Token for GitLab API ([which tokens have API access?](https://docs.gitlab.com/ee/security/token_overview.html#available-scopes))
+- `options` - Global options to all targets
+    - `keep_last` - Keeps at least some amount of pipelines
+    - `delete_older_than` - Deletes a pipelines older than some duration, for example `30d`
+    - `skip_statuses` - Skip a pipelines with specified statuses
+- `targets` - List of projects or groups to search for a pipelines
+    - `project` - Project name or the following object:
+      - `name` - Project name
+    - `group` - Group name or the following object:
+      - `name` - Group name
+      - `recursive` - Enables search in subgroups
+      - `exclude` - Exclude specified projects from searching (full path, i.e. `mygroup/myprojecttoexclude`)
+    - `options` - Optional overrides of global options
+
+## Deploy
+
+### Docker
+```bash
+docker run --rm
+    -v './configuration:/configuration'
+    -e 'CONFIG_PATH=/configuration/config.yml'
+    whilein/gitlab-pipelines-cleaner
+```
+
 # TODO
-- Some docs
 - Child pipelines
+- Merge Requests
