@@ -1,4 +1,4 @@
-# gitlab-pipeline-cleaner (WIP)
+# gitlab-pipeline-cleaner
 <div align="center">
   <a href="https://github.com/whilein/gitlab-pipeline-cleaner/blob/master/LICENSE">
     <img src="https://img.shields.io/github/license/whilein/gitlab-pipeline-cleaner">
@@ -40,10 +40,10 @@
 
 ### Docker
 ```bash
-docker run --rm
-    -v './configuration:/configuration'
-    -e 'CONFIG_PATH=/configuration/config.yml'
-    whilein/gitlab-pipelines-cleaner
+docker run --rm \
+    -v './configuration:/configuration' \
+    -e 'CONFIG_PATH=/configuration/config.yml' \
+    whilein/gitlab-pipeline-cleaner
 ```
 
 # TODO
