@@ -127,13 +127,13 @@ def prepare_projects(api, targets):
 
 def main():
     cfg = config.load_config()
-    api = GitLabAPI(cfg.host, cfg.token)
+    api = GitLabAPI(cfg.url, cfg.token)
 
     targets = prepare_targets(cfg)
     projects = prepare_projects(api, targets)
 
     pool = multiprocessing.pool.ThreadPool(processes=os.cpu_count() * 2)
-    print(f'Searching for old pipelines..')
+    print('Searching for old pipelines..')
 
     now = datetime.datetime.now(datetime.timezone.utc)
 
@@ -141,7 +141,8 @@ def main():
         project_id, options = item
         pipelines = api.get_project_pipelines(project_id)
         return [(project_id, pipeline.id) for pipeline in pipelines[options.keep_last:]
-                if now - pipeline.updated_at >= options.delete_older_than]
+                if now - pipeline.updated_at >= options.delete_older_than
+                and pipeline.status not in options.skip_statuses]
 
     pipelines_to_delete = [pipeline for pipelines in pool.map(get_pipelines_to_delete, projects.items()) for pipeline in
                            pipelines]
@@ -151,7 +152,7 @@ def main():
         project_id, pipeline_id = pipeline
         api.delete_pipeline(project_id, pipeline_id)
 
-    print(f'Deleting old pipelines..')
+    print('Deleting old pipelines..')
     futures = []
 
     for pipeline in pipelines_to_delete:
@@ -175,7 +176,7 @@ def print_options(title: str, options: config.Options, ident: int = 0):
         print(f'Keep last {options.keep_last} pipelines')
     else:
         print(f'Delete pipelines older than {write_timedelta(options.delete_older_than)}, '
-              f'but keep last {options.keep_last}')
+              f'but keep at least {options.keep_last}')
 
 
 if __name__ == '__main__':

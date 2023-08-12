@@ -31,11 +31,11 @@ class Pipeline(BaseModel):
 
 
 class GitLabAPI:
-    host: str
+    url: str
     session: requests.Session
 
-    def __init__(self, host: str, token: str):
-        self.host = host
+    def __init__(self, url: str, token: str):
+        self.url = url
 
         self.session = requests.Session()
 
@@ -44,7 +44,7 @@ class GitLabAPI:
         }
 
     def _endpoint(self, path: str):
-        return 'https://' + self.host + '/api/v4' + path
+        return self.url + '/api/v4' + path
 
     def _get(self, path: str, params: dict | None = None):
         response = self.session.get(self._endpoint(path), params=params)

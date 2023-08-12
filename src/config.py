@@ -13,6 +13,7 @@
 #     limitations under the License.
 
 import os
+from pathlib import Path
 from datetime import timedelta
 from typing import Any
 
@@ -21,12 +22,14 @@ from pydantic import BaseModel, model_validator, field_validator
 
 from utils import read_timedelta
 
-CONFIG_PATH = 'config.yml'
+CONFIG_PATH = Path(os.environ.get('CONFIG_PATH', 'config.yml'))
+CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 class Options(BaseModel):
     keep_last: int = None
     delete_older_than: timedelta = None
+    skip_statuses: list[str] = None
 
     @field_validator('delete_older_than', mode='before')
     @classmethod
@@ -40,6 +43,7 @@ class Options(BaseModel):
 class DefaultOptions(Options):
     keep_last: int
     delete_older_than: timedelta
+    skip_statuses: list[str]
 
 
 class Group(BaseModel):
@@ -66,22 +70,23 @@ class Target(BaseModel):
 
 
 class Config(BaseModel):
-    host: str
+    url: str
     token: str
     options: DefaultOptions
     targets: list[Target]
 
 
 def load_config() -> Config:
-    if os.path.exists(CONFIG_PATH):
-        with open('config.yml', 'r') as f:
+    if CONFIG_PATH.exists():
+        with CONFIG_PATH.open('r') as f:
             config = yaml.safe_load(f)
     else:
-        with open('config.yml', 'w') as f:
+        with CONFIG_PATH.open('w') as f:
             config = {
-                'host': 'gitlab.com',
+                'url': 'https://gitlab.com',
                 'token': '',
                 'options': {
+                    'skip_statuses': ['created', 'waiting_for_resources', 'preparing', 'pending', 'running'],
                     'keep_last': 20,
                     'delete_older_than': '30d'
                 },
@@ -94,6 +99,14 @@ def load_config() -> Config:
                     },
                     {
                         'group': 'mygroup'
+                    },
+                    {
+                        'group': {
+                            'name': 'mygroup',
+                            'excludes': [
+                                'mygroup/myproject'
+                            ]
+                        }
                     }
                 ]
             }
