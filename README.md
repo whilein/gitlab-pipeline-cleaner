@@ -15,6 +15,9 @@
   <a href="https://github.com/whilein/gitlab-pipeline-cleaner/pulls">
     <img src="https://img.shields.io/github/issues-pr/whilein/gitlab-pipeline-cleaner">
   </a>
+  <a href="https://hub.docker.com/r/whilein/gitlab-pipeline-cleaner">
+    <img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/whilein/gitlab-pipeline-cleaner" />
+  </a>
 </div>
 
 ## Configuration
@@ -26,11 +29,11 @@
     - `skip_statuses` - Skip a pipelines with specified statuses
 - `targets` - List of projects or groups to search for a pipelines
     - `project` - Project name or the following object:
-      - `name` - Project name
+        - `name` - Project name
     - `group` - Group name or the following object:
-      - `name` - Group name
-      - `recursive` - Enables search in subgroups
-      - `exclude` - Exclude specified projects from searching (full path, i.e. `mygroup/myprojecttoexclude`)
+        - `name` - Group name
+        - `recursive` - Enables search in subgroups
+        - `exclude` - Exclude specified projects from searching (full path, i.e. `mygroup/myprojecttoexclude`)
     - `options` - Optional overrides of global options
 
 ## Environment
