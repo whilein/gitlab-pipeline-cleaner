@@ -99,6 +99,8 @@ def prepare_targets(cfg):
             if target_options.delete_older_than is None:
                 target_options.delete_older_than = defaults.delete_older_than
 
+            if target_options.skip_statuses is None:
+                target_options.skip_statuses = defaults.skip_statuses
         print('- ' + target.display_name(), end='')
 
         if target_options != defaults:
