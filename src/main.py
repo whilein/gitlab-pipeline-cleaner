@@ -17,12 +17,13 @@ import multiprocessing.pool
 import os
 
 import config
-from api import GitLabAPI
+import api
+
 from utils import write_timedelta
 
 
 class Target:
-    def get_project_ids(self, api: GitLabAPI) -> list[int]:
+    def get_project_ids(self, gitlab: api.GitLabAPI) -> list[int]:
         pass
 
     def display_name(self):
@@ -47,24 +48,24 @@ class Project(Target):
     def display_name(self):
         return 'Project ' + self.name
 
-    def get_project_ids(self, api: GitLabAPI) -> list[int]:
-        return [api.get_project(self.name).id]
+    def get_project_ids(self, gitlab: api.GitLabAPI) -> list[int]:
+        return [gitlab.get_project(self.name).id]
 
 
 class Group(Target):
     name: str
     recursive: bool
     exclude: list[str]
+    archive_behavior: config.ArchiveInclusion
 
     def __init__(self, group: config.Group | str):
         if isinstance(group, str):
-            self.name = group
-            self.recursive = False
-            self.exclude = []
-        else:
-            self.name = group.name
-            self.recursive = group.recursive
-            self.exclude = group.exclude
+            group = config.Group(name=group)
+
+        self.name = group.name
+        self.recursive = group.recursive
+        self.exclude = group.exclude
+        self.archive_behavior = group.archive_inclusion
 
     def priority(self):
         return False
@@ -72,9 +73,10 @@ class Group(Target):
     def display_name(self):
         return 'Group ' + self.name
 
-    def get_project_ids(self, api: GitLabAPI) -> list[int]:
-        return [project.id for project in api.get_group_projects(self.name, self.recursive)
-                if project.path_with_namespace not in self.exclude]
+    def get_project_ids(self, gitlab: api.GitLabAPI) -> list[int]:
+        return [project.id for project in gitlab.get_group_projects(self.name, self.recursive)
+                if project.path_with_namespace not in self.exclude
+                and self.archive_behavior.matcher(project.archived)]
 
 
 def prepare_targets(cfg):
@@ -110,13 +112,13 @@ def prepare_targets(cfg):
     return targets
 
 
-def prepare_projects(api, targets):
+def prepare_projects(gitlab, targets):
     print('Searching for project ids..')
 
     projects = {}
 
     for target, options in targets.items():
-        for project_id in target.get_project_ids(api):
+        for project_id in target.get_project_ids(gitlab):
             if project_id in projects and not target.priority():
                 continue
             projects[project_id] = options
@@ -127,10 +129,10 @@ def prepare_projects(api, targets):
 
 def main():
     cfg = config.load_config()
-    api = GitLabAPI(cfg.url, cfg.token)
+    gitlab = api.GitLabAPI(cfg.url, cfg.token)
 
     targets = prepare_targets(cfg)
-    projects = prepare_projects(api, targets)
+    projects = prepare_projects(gitlab, targets)
 
     pool = multiprocessing.pool.ThreadPool(processes=os.cpu_count() * 2)
     print('Searching for old pipelines..')
@@ -139,7 +141,7 @@ def main():
 
     def get_pipelines_to_delete(item):
         project_id, options = item
-        pipelines = api.get_project_pipelines(project_id)
+        pipelines = gitlab.get_project_pipelines(project_id)
         return [(project_id, pipeline.id) for pipeline in pipelines[options.keep_last:]
                 if now - pipeline.updated_at >= options.delete_older_than
                 and pipeline.status not in options.skip_statuses]
@@ -150,7 +152,7 @@ def main():
 
     def delete_old_pipelines(pipeline):
         project_id, pipeline_id = pipeline
-        api.delete_pipeline(project_id, pipeline_id)
+        gitlab.delete_pipeline(project_id, pipeline_id)
 
     print('Deleting old pipelines..')
     futures = []

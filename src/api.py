@@ -22,6 +22,7 @@ from pydantic import BaseModel
 class Project(BaseModel):
     id: int
     path_with_namespace: str
+    archived: bool
 
 
 class Pipeline(BaseModel):

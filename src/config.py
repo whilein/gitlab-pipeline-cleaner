@@ -13,6 +13,7 @@
 #     limitations under the License.
 
 import os
+from enum import Enum
 from pathlib import Path
 from datetime import timedelta
 from typing import Any
@@ -46,10 +47,24 @@ class DefaultOptions(Options):
     skip_statuses: list[str]
 
 
+class ArchiveInclusion(Enum):
+    ONLY = 'only', lambda archived: archived
+    INCLUDE = 'include', lambda archived: True
+    EXCLUDE = 'exclude', lambda archived: not archived
+
+    def __new__(cls, value, matcher):
+        enum = object.__new__(cls)
+        enum._value_ = value
+        enum.matcher = matcher
+        
+        return enum
+
+
 class Group(BaseModel):
     name: str
     recursive: bool = False
     exclude: list[str] = []
+    archive_inclusion: ArchiveInclusion = ArchiveInclusion.INCLUDE
 
 
 class Project(BaseModel):
