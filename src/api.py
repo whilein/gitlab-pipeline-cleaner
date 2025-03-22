@@ -52,8 +52,12 @@ class GitLabAPI:
         json = response.json()
 
         if response.status_code != 200:
-            raise RuntimeError(json['message'])
-
+            if 'message' in json:
+                raise RuntimeError(json['message'])
+            elif 'error' in json and 'error_description' in json:
+                raise RuntimeError(f"[{json['error']}] {json['error_description']}")
+            else:
+                raise RuntimeError(f"server returned an error: {response.status_code}")
         return json
 
     def _paginated(self, path, model, params=None):
