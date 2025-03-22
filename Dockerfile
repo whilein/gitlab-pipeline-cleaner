@@ -1,6 +1,6 @@
-FROM python:alpine
+FROM python:3.12.6-alpine
+ENTRYPOINT [ "python", "main.py" ]
 WORKDIR /app
-COPY src .
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-ENTRYPOINT [ "python", "main.py" ]
+COPY src .
